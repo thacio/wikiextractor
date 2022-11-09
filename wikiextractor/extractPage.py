@@ -46,8 +46,7 @@ tagRE = re.compile(r'(.*?)<(/?\w+)[^>]*>(?:([^<]*)(<.*?>)?)?')
 def process_data(input_file, id, templates=False):
     """
     :param input_file: name of the wikipedia dump file.
-    :param id: article id.
-    :param templates: whether article is a template.
+    :param id: article id
     """
 
     if input_file.lower().endswith(".bz2"):
@@ -106,9 +105,9 @@ def main():
     parser.add_argument("--id", default="1",
                         help="article number")
     parser.add_argument("--template", action="store_true",
-                        help="whether article is a template")
+                        help="template number")
     parser.add_argument("-v", "--version", action="version",
-                        version='%(prog)s ' + __version__,
+                        version='%(prog)s ' + version,
                         help="print program version")
 
     args = parser.parse_args()
