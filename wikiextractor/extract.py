@@ -26,6 +26,7 @@ from urllib.parse import quote as urlencode
 from html.entities import name2codepoint
 import logging
 import time
+import pandas # Thacio
 
 # ----------------------------------------------------------------------
 
@@ -64,6 +65,81 @@ def get_url(urlbase, uid):
     return "%s?curid=%s" % (urlbase, uid)
 
 
+# ===== Thacio
+def convertWikiTable(text, openDelim, closeDelim, extractor):
+    """
+    A matching function for nested expressions, e.g. namespaces and tables.
+    """
+    openRE = re.compile(openDelim, re.IGNORECASE)
+    closeRE = re.compile(closeDelim, re.IGNORECASE)
+    # partition text in separate blocks { } { }
+    spans = []  # pairs (s, e) for each partition
+    nest = 0  # nesting level
+    start = openRE.search(text, 0)
+    if not start:
+        return text
+    end = closeRE.search(text, start.end())
+    next = start
+    while end:
+        next = openRE.search(text, next.end())
+        if not next:  # termination
+            while nest:  # close all pending
+                nest -= 1
+                end0 = closeRE.search(text, end.end())
+                if end0:
+                    end = end0
+                else:
+                    break
+            spans.append((start.start(), end.end()))
+            break
+        while end.end() < next.start():
+            # { } {
+            if nest:
+                nest -= 1
+                # try closing more
+                last = end.end()
+                end = closeRE.search(text, end.end())
+                if not end:  # unbalanced
+                    if spans:
+                        span = (spans[0][0], last)
+                    else:
+                        span = (start.start(), last)
+                    spans = [span]
+                    break
+            else:
+                spans.append((start.start(), end.end()))
+                # advance start, find next close
+                start = next
+                end = closeRE.search(text, next.end())
+                break  # { }
+        if next != start:
+            # { { }
+            nest += 1
+    # collect text outside partitions
+    return dropSpansModified(spans, text, extractor)
+
+
+def dropSpansModified(spans, text, extractor):
+    """
+    Drop from text the blocks identified in :param spans:, possibly nested.
+    """
+    spans.sort()
+    res = ''
+    offset = 0
+    for s, e in spans:
+        if offset <= s:  # handle nesting
+            if offset < s:
+                res += text[offset:s]
+            offset = e
+    
+    # Thacio - fazer um interpretador wikitable para outra coisa aqui
+    print('artigo: ',extractor.id)
+    print(text[s:offset])
+    print('-------------------------')
+    res += text[offset:]
+    # print(text)
+    return res
+
 # ======================================================================
 
 
@@ -77,7 +153,6 @@ def clean(extractor, text, expand_templates=False, html_safe=True):
     :param html_safe: whether to convert reserved HTML characters to entities.
     @return: the cleaned text.
     """
-
     if expand_templates:
         # expand templates
         # See: http://www.mediawiki.org/wiki/Help:Templates
@@ -86,8 +161,13 @@ def clean(extractor, text, expand_templates=False, html_safe=True):
         # Drop transclusions (template, parser functions)
         text = dropNested(text, r'{{', r'}}')
 
-    # Drop tables
-    text = dropNested(text, r'{\|', r'\|}')
+    # # Drop tables
+    # text = dropNested(text, r'{\|', r'\|}')
+    # Thacio
+    # text = convertWikiTable(text, r'{\|', r'\|}', extractor)
+    if extractor.id=='223':
+      text = convertWikiTable(text, r'{\|', r'\|}', extractor)
+      # print(text)
 
     # replace external links
     text = replaceExternalLinks(text)
