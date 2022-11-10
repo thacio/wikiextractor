@@ -28,6 +28,8 @@ import logging
 import time
 import pandas # Thacio
 
+templatePrefix='' # bugfix
+
 # ----------------------------------------------------------------------
 
 # match tail after wikilink
@@ -133,7 +135,7 @@ def cleanWikiTable(spans, text, extractor):
                 res += text[offset:s]
             offset = e    
 
-        # Thacio - fazer um interpretador wikitable para outra coisa aqui
+        # Thacio - clean wikitable attributes
         wikitable=text[s:offset]
 
         wikitable=re.sub('&quot;','\"',wikitable)
@@ -186,18 +188,19 @@ def cleanWikiTable(spans, text, extractor):
 
     res += text[offset:]
 
-    # print('artigo: ',extractor.id)
-    # print('antes-----')
-    # print(text)
-    # print('depois-----')
-    # print(res)
+    # if extractor.id=='1227':
+    #     print('artigo: ',extractor.id)
+    #     print('antes-----')
+    #     print(text)
+    #     print('depois-----')
+    #     print(res)
 
     return res
 
 # ======================================================================
 
 
-def clean(extractor, text, expand_templates=False, html_safe=True):
+def clean(extractor, text, expand_templates=True, html_safe=True):
     """
     Transforms wiki markup. If the command line flag --escapedoc is set then the text is also escaped
     @see https://www.mediawiki.org/wiki/Help:Formatting
@@ -210,7 +213,18 @@ def clean(extractor, text, expand_templates=False, html_safe=True):
     if expand_templates:
         # expand templates
         # See: http://www.mediawiki.org/wiki/Help:Templates
-        text = extractor.expandTemplates(text)
+        text1 = text
+        text = extractor.expandTemplates(text)        
+
+        text2 = dropNested(text1, r'{{', r'}}')
+
+        if text1!=text2:
+            print('template fez diferença: ',extractor.id)
+            print('antes----')
+            print(text1)
+            print('depois----')
+            print(text2)
+            print('----------------------')
     else:
         # Drop transclusions (template, parser functions)
         text = dropNested(text, r'{{', r'}}')
@@ -958,7 +972,7 @@ class Extractor():
         self.recursion_exceeded_3_errs = 0  # parameter recursion
         self.template_title_errs = 0
 
-    def clean_text(self, text, mark_headers=False, expand_templates=False,
+    def clean_text(self, text, mark_headers=False, expand_templates=True,
                    html_safe=True):
         """
         :param mark_headers: True to distinguish headers from paragraphs
