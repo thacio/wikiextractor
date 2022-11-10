@@ -213,18 +213,7 @@ def clean(extractor, text, expand_templates=True, html_safe=True):
     if expand_templates:
         # expand templates
         # See: http://www.mediawiki.org/wiki/Help:Templates
-        text1 = text
         text = extractor.expandTemplates(text)        
-
-        text2 = dropNested(text1, r'{{', r'}}')
-
-        if text1!=text2:
-            print('template fez diferença: ',extractor.id)
-            print('antes----')
-            print(text1)
-            print('depois----')
-            print(text2)
-            print('----------------------')
     else:
         # Drop transclusions (template, parser functions)
         text = dropNested(text, r'{{', r'}}')
