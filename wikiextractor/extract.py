@@ -127,9 +127,6 @@ def cleanWikiTable(spans, text, extractor):
     res = ''
     offset = 0
 
-    # if extractor.id!='940': # 719
-    #     return ''
-
     for s, e in spans:
         if offset <= s:  # handle nesting
             if offset < s:
@@ -139,13 +136,7 @@ def cleanWikiTable(spans, text, extractor):
         # Thacio - fazer um interpretador wikitable para outra coisa aqui
         wikitable=text[s:offset]
 
-        # print('artigo: ',extractor.id)
-        # print('antes-----')
-        # print(wikitable)
-
         wikitable=re.sub('&quot;','\"',wikitable)
-        # wikitable=re.sub('style=\".*?\|','',wikitable)
-        # wikitable=re.sub('style=\".*?\"','',wikitable)
         wikitable=re.sub('cellspacing=\".*?\"','',wikitable)
         wikitable=re.sub('class=\".*?\"','',wikitable)
         wikitable=re.sub('class=\".*?\"','',wikitable)
@@ -178,9 +169,6 @@ def cleanWikiTable(spans, text, extractor):
         wikitable=re.sub('&replaced;','',wikitable)
         wikitable=re.sub('\"','&quot;',wikitable)
 
-        # wikitable=re.sub('\n! +\|','\n! ',wikitable)
-        # wikitable=re.sub('\n\| +\|','\n| ',wikitable)
-
         # debugging: search for attributes missing
         # pattern = re.compile(' [a-z]{1,10}?=\".*?\"')
         # for match in re.findall(pattern, wikitable):
@@ -197,7 +185,6 @@ def cleanWikiTable(spans, text, extractor):
 
 
     res += text[offset:]
-    # print(text)
 
     # print('artigo: ',extractor.id)
     # print('antes-----')
