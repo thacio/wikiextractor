@@ -116,26 +116,83 @@ def convertWikiTable(text, openDelim, closeDelim, extractor):
             # { { }
             nest += 1
     # collect text outside partitions
-    return dropSpansModified(spans, text, extractor)
+    return cleanWikiTable(spans, text, extractor)
 
 
-def dropSpansModified(spans, text, extractor):
+def cleanWikiTable(spans, text, extractor):
     """
     Drop from text the blocks identified in :param spans:, possibly nested.
     """
     spans.sort()
     res = ''
     offset = 0
+
+    # if extractor.id!='940': # 719
+    #     return ''
+
     for s, e in spans:
         if offset <= s:  # handle nesting
             if offset < s:
                 res += text[offset:s]
-            offset = e
-    
-    # Thacio - fazer um interpretador wikitable para outra coisa aqui
-    print('artigo: ',extractor.id)
-    print(text[s:offset])
-    print('-------------------------')
+            offset = e    
+
+        # Thacio - fazer um interpretador wikitable para outra coisa aqui
+        wikitable=text[s:offset]
+
+        # print('artigo: ',extractor.id)
+        # print('antes-----')
+        # print(wikitable)
+
+        wikitable=re.sub('&quot;','\"',wikitable)
+        # wikitable=re.sub('style=\".*?\|','',wikitable)
+        # wikitable=re.sub('style=\".*?\"','',wikitable)
+        wikitable=re.sub('cellspacing=\".*?\"','',wikitable)
+        wikitable=re.sub('class=\".*?\"','',wikitable)
+        wikitable=re.sub('class=\".*?\"','',wikitable)
+
+        # attributes_to_remove=[
+        #   'style','bgcolor','valign','align', 'abbr',
+        #   'border','cellpadding', 'cellpading','scope', 'width', 'height',
+        #   'size', 'padding', 'ref name', 'display', 'group',
+        #   'rules', 'id', 'face', 'dir', 'start', 'href', 'color', 'type',
+        #   'name', 'alin', 'lang', 'colspacing', 'summary', 'frames',
+        #   'nowrap', 'value', 'role', 'zoom', 'aling', 'widht', 'resource',
+        #   'title', 'lign', 'borderline', 'sytle','margin','widht',
+        #   'rel','background','cvlass','float','alegn', 'valing',
+        #   'mode', 'with', 'heights', 'wspan','sound','cellpaddng',
+        #   'clase','estilo','widths','perrow','frame','src','font',
+        #   'cidades'
+        # ]
+
+        # remove all attribues except "colspan" e "rowspan"
+        wikitable=re.sub('\"([a-z])','\" \1',wikitable)
+        attributes_to_remove=[
+          'ref name'
+        ]
+        for attribute in attributes_to_remove:
+            wikitable=re.sub(attribute+'=\".*?\"','&replaced;',wikitable)
+
+        wikitable=re.sub('( +|!|-|\|)(?!colspan|rowspan)[a-z]{2,15}=\".*?\"','&replaced;',wikitable)
+        wikitable=re.sub('\n!( |&replaced;)+\|','\n! ',wikitable)
+        wikitable=re.sub('\n\|( |&replaced;)+\|','\n| ',wikitable)
+        wikitable=re.sub('&replaced;','',wikitable)
+
+        # wikitable=re.sub('\n! +\|','\n! ',wikitable)
+        # wikitable=re.sub('\n\| +\|','\n| ',wikitable)
+
+        # debugging: search for attributes missing
+        # pattern = re.compile(' [a-z]{1,10}?=\".*?\"')
+        # for match in re.findall(pattern, wikitable):
+        #     # if re.search('(colspan|rowspan)',match)==None:
+        #     #     # print('artigo: ',extractor.id)
+        #     #     print(match)
+            # print(match)       
+
+        # print('depois-----')
+        # print(wikitable)
+        # print('-------------------------')
+
+
     res += text[offset:]
     # print(text)
     return res
@@ -164,9 +221,9 @@ def clean(extractor, text, expand_templates=False, html_safe=True):
     # # Drop tables
     # text = dropNested(text, r'{\|', r'\|}')
     # Thacio
-    # text = convertWikiTable(text, r'{\|', r'\|}', extractor)
-    if extractor.id=='223':
-      text = convertWikiTable(text, r'{\|', r'\|}', extractor)
+    text = convertWikiTable(text, r'{\|', r'\|}', extractor)
+    # if extractor.id=='223':
+    #   text = convertWikiTable(text, r'{\|', r'\|}', extractor)
       # print(text)
 
     # replace external links
