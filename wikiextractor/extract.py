@@ -192,9 +192,18 @@ def cleanWikiTable(spans, text, extractor):
         # print(wikitable)
         # print('-------------------------')
 
+        res += wikitable
+
 
     res += text[offset:]
     # print(text)
+
+    # print('artigo: ',extractor.id)
+    # print('antes-----')
+    # print(text)
+    # print('depois-----')
+    # print(res)
+
     return res
 
 # ======================================================================
@@ -222,9 +231,12 @@ def clean(extractor, text, expand_templates=False, html_safe=True):
     # text = dropNested(text, r'{\|', r'\|}')
     # Thacio
     text = convertWikiTable(text, r'{\|', r'\|}', extractor)
-    # if extractor.id=='223':
+    # if extractor.id=='223': #223
+    #   print('antes-----')
+    #   print(text)
     #   text = convertWikiTable(text, r'{\|', r'\|}', extractor)
-      # print(text)
+    #   print('depois-----')
+    #   print(text)
 
     # replace external links
     text = replaceExternalLinks(text)
