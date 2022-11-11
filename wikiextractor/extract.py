@@ -338,7 +338,7 @@ listClose = {'*': '</ul>', '#': '</ol>', ';': '</dl>', ':': '</dl>'}
 listItem = {'*': '<li>%s</li>', '#': '<li>%s</<li>', ';': '<dt>%s</dt>',
             ':': '<dd>%s</dd>'}
 
-
+# Original
 def compact(text, mark_headers=False):
     """Deal with headers, lists, empty sections, residuals of tables.
     :param text: convert to HTML
@@ -437,6 +437,130 @@ def compact(text, mark_headers=False):
 
     return page
 
+# Thacio
+def compactModified(extractor, text, mark_headers=False):
+    """Deal with headers, lists, empty sections, residuals of tables.
+    :param text: convert to HTML
+    """
+
+    page = []  # list of paragraph
+    headers = {}  # Headers for unfilled sections
+    emptySection = False  # empty sections are discarded
+    listLevel = ''  # nesting of lists
+
+    # if extractor.id=='974':
+    #     print('antes-------')
+    #     print(text)
+    #     print('duranteeeeee--------------')
+
+    for line in text.split('\n'):
+        # if extractor.id=='974':
+        #     print(line)
+
+        line_wo_space=line.replace(' ','')
+        if line_wo_space=='*' \
+        or line_wo_space==':' \
+        or line_wo_space==';' \
+        or line_wo_space=='#*':
+            continue
+
+        if not line:
+            page.append(line) # leave '\n' lines
+            continue
+        # Handle section titles
+        m = section.match(line)
+        if m:
+            title = m.group(2)
+            lev = len(m.group(1))
+            if Extractor.HtmlFormatting:
+                page.append("<h%d>%s</h%d>" % (lev, title, lev))
+            # Original
+            # if title and title[-1] not in '!?':
+            #     title += '.'
+            title = m.group(1) + ' ' + m.group(2) + ' ' + m.group(1) # modificado
+
+            if mark_headers:
+                title = "## " + title
+
+            headers[lev] = title
+            # drop previous headers
+            headers = { k:v for k,v in headers.items() if k <= lev }
+            emptySection = True
+            continue
+        # Handle page title
+        if line.startswith('++'):
+            title = line[2:-2]
+            if title:
+                if title[-1] not in '!?':
+                    title += '.'
+                page.append(title)
+        # handle indents
+        elif line[0] == ':':
+            # page.append(line.lstrip(':*#;'))
+            continue
+        # handle lists
+        elif line[0] in ':':
+        # elif line[0] in '*#;:':
+            if Extractor.HtmlFormatting:
+                i = 0
+                for c, n in zip_longest(listLevel, line, fillvalue=''):
+                    if not n or n not in '*#;:':
+                        if c:
+                            page.append(listClose[c])
+                            listLevel = listLevel[:-1]
+                            continue
+                        else:
+                            break
+                    # n != ''
+                    if c != n and (not c or (c not in ';:' and n not in ';:')):
+                        if c:
+                            # close level
+                            page.append(listClose[c])
+                            listLevel = listLevel[:-1]
+                        listLevel += n
+                        page.append(listOpen[n])
+                    i += 1
+                n = line[i - 1]  # last list char
+                line = line[i:].strip()
+                if line:  # FIXME: n is '"'
+                    page.append(listItem[n] % line)
+            else:
+                continue
+        elif len(listLevel):
+            for c in reversed(listLevel):
+                page.append(listClose[c])
+            listLevel = []
+
+        # # Drop residuals of lists
+        # elif line[0] in '{|' or line[-1] == '}':
+        #     continue
+        # Drop irrelevant lines
+        elif (line[0] == '(' and line[-1] == ')') or line.strip('.-') == '':
+            continue
+        elif len(headers):
+            if Extractor.keepSections:
+                items = sorted(headers.items())
+                for (i, v) in items:
+                    page.append(v)
+            headers.clear()
+            page.append(line)  # first line
+            emptySection = False
+        elif not emptySection:
+            page.append(line)
+            # dangerous
+            # # Drop preformatted
+            # elif line[0] == ' ':
+            #     continue
+
+    for i in range(0,len(page)):
+        page[i]=page[i].replace('&lt;','<').replace('&gt;','>')
+
+    # if extractor.id=='974':
+    #     print('depois-------')
+    #     for line in page:
+    #         print(line)
+
+    return page
 
 # ----------------------------------------------------------------------
 
@@ -997,7 +1121,16 @@ class Extractor():
         text = clean(self, text, expand_templates=expand_templates,
                      html_safe=html_safe)
 
-        text = compact(text, mark_headers=mark_headers)
+        # if self.id=='974':
+        #     print('antes------')
+        #     print(text)
+
+        # text = compact(text, mark_headers=mark_headers)
+        text = compactModified(self, text, mark_headers=mark_headers)        
+
+        # if self.id=='974':
+        #     print('depois------')
+        #     print(text)
         return text
 
     def extract(self, out, html_safe=True):
