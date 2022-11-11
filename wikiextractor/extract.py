@@ -287,12 +287,29 @@ def clean(extractor, text, expand_templates=True, html_safe=True):
         # Turn into text what is left (&amp;nbsp;) and <syntaxhighlight>
         text = unescape(text)
 
+    ## Original
+    # # Expand placeholders
+    # for pattern, placeholder in placeholder_tag_patterns:
+    #     index = 1
+    #     for match in pattern.finditer(text):
+    #         if placeholder=='codice':
+    #           print(extractor.id)
+    #           print(match)
+    #         text = text.replace(match.group(), '%s_%d' % (placeholder, index))
+    #         index += 1
+
     # Expand placeholders
     for pattern, placeholder in placeholder_tag_patterns:
         index = 1
-        for match in pattern.finditer(text):
-            text = text.replace(match.group(), '%s_%d' % (placeholder, index))
-            index += 1
+
+        if placeholder=='formula':
+          continue
+        elif placeholder=='codice':
+            text = re.sub('<code>(.*?)<\/code>','\\1',text)
+        else:
+            for match in pattern.finditer(text):
+                text = text.replace(match.group(), '%s_%d' % (placeholder, index))
+                index += 1
 
     text = text.replace('<<', u'«').replace('>>', u'»')
 
@@ -308,6 +325,8 @@ def clean(extractor, text, expand_templates=True, html_safe=True):
     text = text.replace(',,', ',').replace(',.', '.')
     if html_safe:
         text = html.escape(text, quote=False)
+
+    unescape(text)
     return text
 
 
