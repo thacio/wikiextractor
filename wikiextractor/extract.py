@@ -371,6 +371,9 @@ def clean(extractor, text, expand_templates=True, html_safe=True):
         text=re.sub(attribute+r'=\".*?\"','&replaced;',text)
     
     text=re.sub('&replaced;','',text)
+    text=re.sub(r'{  \n|- \n|colspan="2"  | Outros projetos Wikimedia também contêm material sobre este tema:\n! | \n| Definições no Wikcionário\n\n! \n| no \n\n! \n| no \n! \n| no \n\n! \n| no \n! \n| no \n! \n|- \n\n|}','',text)
+    text=re.sub(r'||| Outros projetos Wikimedia também contêm material sobre este tema:\n\n!|||| no\n|','',text)
+    text=re.sub(r'||colspan="2" | Outros projetos Wikimedia também contêm material sobre este tema:\n||||!| no||||||','',text)    
 
     return text
 
