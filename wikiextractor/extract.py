@@ -322,8 +322,8 @@ def clean(extractor, text, expand_templates=True, html_safe=True):
     # Cleanup text
     text = text.replace('\t', ' ')
     text = spaces.sub(' ', text)
-    text = text.replace('#REDIRECIONAMENTO ','')
-    text = text.replace('#Redirecionamento ','')
+    text = text.replace('#REDIRECIONAMENTO','')
+    text = text.replace('#Redirecionamento','')
     text = dots.sub('...', text)
     text = re.sub(u' (,:\.\)\]»)', r'\1', text)
     text = re.sub(u'(\[\(«) ', r'\1', text)
