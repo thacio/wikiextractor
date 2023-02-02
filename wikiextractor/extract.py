@@ -140,36 +140,40 @@ def cleanWikiTable(spans, text, extractor):
 
         wikitable=re.sub('&quot;','\"',wikitable)
         wikitable=re.sub('cellspacing=\".*?\"','',wikitable)
-        wikitable=re.sub('class=\".*?\"','',wikitable)
+        wikitable=re.sub(r'class=\".*?\"','',wikitable)
         wikitable=re.sub('class=\".*?\"','',wikitable)
 
-        # attributes_to_remove=[
-        #   'style','bgcolor','valign','align', 'abbr',
-        #   'border','cellpadding', 'cellpading','scope', 'width', 'height',
-        #   'size', 'padding', 'ref name', 'display', 'group',
-        #   'rules', 'id', 'face', 'dir', 'start', 'href', 'color', 'type',
-        #   'name', 'alin', 'lang', 'colspacing', 'summary', 'frames',
-        #   'nowrap', 'value', 'role', 'zoom', 'aling', 'widht', 'resource',
-        #   'title', 'lign', 'borderline', 'sytle','margin','widht',
-        #   'rel','background','cvlass','float','alegn', 'valing',
-        #   'mode', 'with', 'heights', 'wspan','sound','cellpaddng',
-        #   'clase','estilo','widths','perrow','frame','src','font',
-        #   'cidades'
-        # ]
+        attributes_to_remove=[
+          'style','bgcolor','valign','align', 'abbr',
+          'border','cellpadding', 'cellpading','scope', 'width', 'height',
+          'size', 'padding', 'ref name', 'display', 'group',
+          'rules', 'id', 'face', 'dir', 'start', 'href', 'color', 'type',
+          'name', 'alin', 'lang', 'colspacing', 'summary', 'frames',
+          'nowrap', 'value', 'role', 'zoom', 'aling', 'widht', 'resource',
+          'title', 'lign', 'borderline', 'sytle','margin','widht',
+          'rel','background','cvlass','float','alegn', 'valing',
+          'mode', 'with', 'heights', 'wspan','sound','cellpaddng',
+          'clase','estilo','widths','perrow','frame','src','font',
+          'cidades'
+        ]
 
         # remove all attribues except "colspan" e "rowspan"
         wikitable=re.sub('\"([a-z])','\" \1',wikitable)
-        attributes_to_remove=[
-          'ref name'
-        ]
+        # attributes_to_remove=[
+        #   'ref name'
+        # ]
         for attribute in attributes_to_remove:
-            wikitable=re.sub(attribute+'=\".*?\"','&replaced;',wikitable)
+            wikitable=re.sub(attribute+r'=\".*?\"','&replaced;',wikitable)
 
         wikitable=re.sub('( +|!|-|\|)(?!colspan|rowspan)[a-z]{2,15}=\".*?\"','&replaced;',wikitable)
         wikitable=re.sub('\n!( |&replaced;)+\|','\n! ',wikitable)
         wikitable=re.sub('\n\|( |&replaced;)+\|','\n| ',wikitable)
         wikitable=re.sub('&replaced;','',wikitable)
         wikitable=re.sub('\"','&quot;',wikitable)
+
+        wikitable = re.sub(r'(\n *\n *)+', '\n\n', wikitable)
+        wikitable = re.sub(r'\n\n+', '\n', wikitable)
+
 
         # debugging: search for attributes missing
         # pattern = re.compile(' [a-z]{1,10}?=\".*?\"')
@@ -195,10 +199,6 @@ def cleanWikiTable(spans, text, extractor):
     #     print('depois-----')
     #     print(res)
     
-    res = re.sub('(\n *\n)+', '\n', res).strip()
-    res = re.sub('(\n \n)+', '\n', res).strip()
-    res = re.sub('\n\n+', '\n', res).strip()
-    res = re.sub('/[\n]+/, "\n"', '\n', res).strip()
     return res
 
 # ======================================================================
@@ -323,6 +323,7 @@ def clean(extractor, text, expand_templates=True, html_safe=True):
     text = text.replace('\t', ' ')
     text = spaces.sub(' ', text)
     text = text.replace('#REDIRECIONAMENTO ','')
+    text = text.replace('#Redirecionamento ','')
     text = dots.sub('...', text)
     text = re.sub(u' (,:\.\)\]»)', r'\1', text)
     text = re.sub(u'(\[\(«) ', r'\1', text)
@@ -333,9 +334,43 @@ def clean(extractor, text, expand_templates=True, html_safe=True):
     
     unescape(text)
 
-    text = re.sub('(\n *\n)+', '\n', text).strip()
-    text = re.sub('\n\n\n+', '\n\n', text).strip()
+    # re is not behaving right when inserting \n
+    def recursive_replace(replaced,insert,text):
+        last_len=len(text)
+        while last_len!=len(text):
+            text = text.replace(replaced,insert)
+            last_len=len(text)
 
+        return text
+
+    # removes wikipedia header ===
+    # Thacio
+    text = re.sub(u'===* (.*) ===*\n', r'\1\n', text)
+    # text = re.sub(r' +\n', '\n', text)
+    text = re.sub(r'(\n *\n *)+', '\n\n', text)
+    text = re.sub(r'\n\n+', '\n\n', text)
+
+    attributes_to_remove=[
+      'style','bgcolor','valign','align', 'abbr',
+      'border','cellpadding', 'cellpading','scope', 'width', 'height',
+      'size', 'padding', 'ref name', 'display', 'group',
+      'rules', 'id', 'face', 'dir', 'start', 'href', 'color', 'type',
+      'name', 'alin', 'lang', 'colspacing', 'summary', 'frames',
+      'nowrap', 'value', 'role', 'zoom', 'aling', 'widht', 'resource',
+      'title', 'lign', 'borderline', 'sytle','margin','widht',
+      'rel','background','cvlass','float','alegn', 'valing',
+      'mode', 'with', 'heights', 'wspan','sound','cellpaddng',
+      'clase','estilo','widths','perrow','frame','src','font',
+      'cidades', 'class',
+    ]
+
+    # # remove all attribues except "colspan" e "rowspan"
+    # text=re.sub('\"([a-z])','\" \1',text)
+
+    for attribute in attributes_to_remove:
+        text=re.sub(attribute+r'=\".*?\"','&replaced;',text)
+    
+    text=re.sub('&replaced;','',text)
 
     return text
 
